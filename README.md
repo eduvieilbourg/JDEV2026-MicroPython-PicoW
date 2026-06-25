@@ -103,3 +103,10 @@ Voir :
 
 - `LICENSE_CODE_JDEV2026.md` pour le code ;
 - `LICENSE_SUPPORTS_CC-BY-NC-ND-4.0.md` pour les supports pédagogiques.
+
+## Citation
+
+Version archivée sur Zenodo :
+[![DOI](https://zenodo.org/badge/1279699881.svg)](https://doi.org/10.5281/zenodo.20838002)
+
+Duvieilbourg, E. (2026). JDEV2026 — MicroPython sur Raspberry Pi Pico W. Zenodo.
