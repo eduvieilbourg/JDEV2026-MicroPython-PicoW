@@ -4,6 +4,16 @@ Atelier pratique JDEV2026 — **du Python sur microcontrôleur**, par Eric Duvie
 
 Objectif : construire progressivement un mini-datalogger embarqué : capteur I2C, acquisition propre, timing robuste, `uasyncio`, serveur web local, API REST et détection d'anomalie légère.
 
+## Support de présentation
+
+- [Support PDF](supports/JDEV2026_MicroPython_PicoW_support.pdf)
+
+Le code à copier sur le Pico W se trouve dans le dossier :
+
+```text
+JDEV2026/
+```
+
 ## Démarrage rapide Thonny
 
 Pour l’atelier :
