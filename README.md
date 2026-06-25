@@ -74,14 +74,14 @@ JDEV2026-MicroPython-PicoW/
 
 Dans cet atelier, le mot IA est utilisé mais sans rigueur :
 
-- le Pico W ne fait pas tourner un LLM ;
-- le z-score glissant n'est pas un modèle prédictif ;
-- c'est un **détecteur statistique embarqué** utile pour introduire l'edge AI ;
-- la suite logique est TinyML / TFLite Micro / Edge Impulse, mais ce n'est pas l'objet des 2h.
+- le Pico W ne fait pas tourner un LLM
+- le z-score glissant n'est pas un modèle prédictif
+- c'est un **détecteur statistique embarqué** utile pour introduire l'edge AI
+- la suite logique est TinyML / TFLite Micro / Edge Impulse, mais ce n'est pas l'objet des 2h
 
-## GitHub conseillé pour l'atelier
+## GitHub pour l'atelier
 
-Pour 20 participants, le plus fluide est : dépôt public pendant les JDEV, avec un `README` clair. Par la suite il y aura des tags/branches par étape :
+Pour les participants : dépôt public pendant les JDEV. Par la suite il y aura des tags/branches pour les étapes :
 
 ```bash
 git tag step-01-i2c-scan
@@ -94,8 +94,7 @@ git tag step-07-ia-zscore
 git tag final
 ```
 
-Ou alternative plus contrôlée : dépôt privé dans une organisation GitHub avec une équipe `jdev2026-participants` en lecture. 
-Éviter le dépôt privé d'un compte personnel pour du read-only propre pour les participants.
+Alternative envisagée : dépôt privé dans une organisation type équipe `jdev2026-participants` en lecture.
 
 ## Licence
 
