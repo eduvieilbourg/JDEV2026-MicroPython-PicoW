@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pico W — Dashboard JDEV2026 (DEMO)</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--border:#30363d;
+      --accent:#00c896;--purple:#7c3aed;--amber:#f59e0b;--red:#ef4444;
+      --text:#f0f6fc;--muted:#8b949e;--green:#3fb950;
+    }
+    body { background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:14px;min-height:100vh; }
+    header { background:var(--bg2);border-bottom:2px solid var(--accent);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px; }
+    header h1 { font-size:1.1rem;font-weight:700;color:var(--text); }
+    header h1 span { color:var(--accent); }
+    #sensor-badge {
+      background: var(--bg3); color: var(--muted); font-size: 10px; font-weight: 700;
+      padding: 2px 8px; border-radius: 4px; letter-spacing: .05em; margin-left: 8px;
+      border: 1px solid var(--border);
+    }
+    #sensor-badge.sht30, #sensor-badge.shtc3 { color: var(--accent); border-color: var(--accent); }
+    #sensor-badge.dht11 { color: var(--amber); border-color: var(--amber); }
+    #sensor-badge.simulated { color: var(--purple); border-color: var(--purple); }
+    #status-dot { display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--muted);margin-right:6px;transition:background .3s; }
+    #status-dot.ok  { background:var(--green);box-shadow:0 0 6px var(--green); }
+    #status-dot.err { background:var(--red);  box-shadow:0 0 6px var(--red); }
+    #last-update { font-size:11px;color:var(--muted); }
+    #anomaly-banner { display:none;background:linear-gradient(90deg,#7f1d1d,#991b1b);border:1px solid var(--red);color:#fca5a5;padding:10px 20px;font-weight:600;font-size:.95rem;animation:pulse-bg 1s ease-in-out infinite alternate; }
+    #anomaly-banner.visible { display:flex;align-items:center;gap:10px; }
+    @keyframes pulse-bg { from{background:linear-gradient(90deg,#7f1d1d,#991b1b)}to{background:linear-gradient(90deg,#991b1b,#b91c1c)} }
+    main { padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px; }
+    .card { background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px 16px; }
+    .card.anomaly { border-color:var(--red);background:#1a0a0a; }
+    .card-label { font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:4px; }
+    .card-value { font-size:2.4rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1; }
+    .card-unit  { font-size:1rem;color:var(--muted); }
+    .card-sub   { font-size:11px;color:var(--muted);margin-top:4px; }
+    #val-temp { color:var(--accent); } #val-hum { color:var(--purple); } #val-zscore { color:var(--amber); }
+    .chart-section { margin:0 20px 16px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px; }
+    .chart-title { font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px; }
+    canvas { width:100%;height:160px;display:block; }
+    .ai-section { margin:0 20px 16px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px 16px; }
+    .ai-section h2,.alerts-section h2 { font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px; }
+    .ai-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px; }
+    .ai-item .lbl { font-size:10px;color:var(--muted); }
+    .ai-item .val { font-size:1rem;font-weight:600;font-family:monospace; }
+    .trend-up{color:var(--red);}.trend-down{color:var(--purple);}.trend-stable{color:var(--green);}
+    .alerts-section { margin:0 20px 20px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px 16px; }
+    #alert-list { list-style:none; }
+    #alert-list li { font-size:12px;color:#fca5a5;padding:3px 0;border-bottom:1px solid var(--bg3); }
+    #alert-list li:last-child { border-bottom:none; }
+    .no-alerts { color:var(--muted);font-size:12px; }
+    footer { text-align:center;color:var(--muted);font-size:10px;padding:12px;border-top:1px solid var(--border); }
+  </style>
+</head>
+<body>
+<header>
+  <h1><span id="device-name">Pico W</span> — Dashboard JDEV2026<span id="sensor-badge" style="color:#f59e0b;border-color:#f59e0b">⚡ SIMULATION</span></h1>
+  <div><span id="status-dot"></span><span id="last-update">--</span></div>
+</header>
+<div id="anomaly-banner"><span>⚠</span><span id="anomaly-msg">Anomalie détectée</span></div>
+<main>
+  <div class="card" id="card-temp">
+    <div class="card-label">Température</div>
+    <div class="card-value" id="val-temp">--<span class="card-unit">°C</span></div>
+    <div class="card-sub" id="sub-temp">min -- / max --</div>
+  </div>
+  <div class="card" id="card-hum">
+    <div class="card-label">Humidité</div>
+    <div class="card-value" id="val-hum">--<span class="card-unit">%</span></div>
+    <div class="card-sub" id="sub-hum">--</div>
+  </div>
+  <div class="card" id="card-zscore">
+    <div class="card-label">Z-score</div>
+    <div class="card-value" id="val-zscore">--</div>
+    <div class="card-sub">seuil <span id="zscore-thresh">2.5</span>σ</div>
+  </div>
+  <div class="card" id="card-trend">
+    <div class="card-label">Tendance</div>
+    <div class="card-value" style="font-size:1.4rem" id="val-trend">--</div>
+    <div class="card-sub" id="sub-trend">--</div>
+  </div>
+  <div class="card" id="card-count">
+    <div class="card-label">Mesures</div>
+    <div class="card-value" style="font-size:1.6rem;color:var(--muted)" id="val-count">0</div>
+    <div class="card-sub" id="sub-storage">flash</div>
+  </div>
+</main>
+<section class="chart-section">
+  <div class="chart-title">Température (°C) — temps réel</div>
+  <canvas id="chart-temp"></canvas>
+</section>
+<section class="chart-section">
+  <div class="chart-title">Humidité (%) — temps réel</div>
+  <canvas id="chart-hum"></canvas>
+</section>
+<section class="ai-section">
+  <h2>Analyse IA embarquée</h2>
+  <div class="ai-grid">
+    <div class="ai-item"><div class="lbl">Moyenne (fenêtre)</div><div class="val" id="ai-mean">--</div></div>
+    <div class="ai-item"><div class="lbl">Écart-type</div><div class="val" id="ai-std">--</div></div>
+    <div class="ai-item"><div class="lbl">Min session</div><div class="val" id="ai-gmin">--</div></div>
+    <div class="ai-item"><div class="lbl">Max session</div><div class="val" id="ai-gmax">--</div></div>
+    <div class="ai-item"><div class="lbl">Alertes total</div><div class="val" id="ai-alerts">0</div></div>
+    <div class="ai-item"><div class="lbl">Slope (°C/mesure)</div><div class="val" id="ai-slope">--</div></div>
+  </div>
+</section>
+<section class="alerts-section">
+  <h2>Historique des anomalies</h2>
+  <ul id="alert-list"><li class="no-alerts">Aucune anomalie détectée</li></ul>
+</section>
+<footer>Raspberry Pi Pico W — MicroPython — JDEV2026 — Eric DUVIEILBOURG / CNRS LEMAR</footer>
+
+<script>
+const REFRESH_MS  = 2000;
+const MAX_POINTS  = 60;
+const API_URL     = "/data";
+const ALERTS_URL  = "/alerts";
+
+const SENSOR_LABELS = {
+  sht30: "SHT30 (I2C)", shtc3: "SHTC3 (I2C)",
+  dht11: "DHT11 (1-fil)", simulated: "~ SIMULÉ", none: "--",
+};
+
+// ════════════════════════════════════════════════════════════════════════════
+//  SIMULATION — générateur de données réalistes (mode démo, sans Pico)
+// ════════════════════════════════════════════════════════════════════════════
+let _simCount = 0;
+const _simAlerts = [];
+const _SIM_TYPES = ["sht30", "shtc3", "dht11"];
+const _simSensorType = _SIM_TYPES[Math.floor(Math.random() * _SIM_TYPES.length)];
+
+function _gaussian() {
+  const u = 1 - Math.random();
+  const v = Math.random();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+function _rollingMean(buf) { return buf.reduce((a,b)=>a+b,0) / buf.length; }
+function _rollingStd(buf, mean) { return Math.sqrt(buf.reduce((a,b)=>a+(b-mean)**2,0) / buf.length); }
+
+const _tempBuf = [];
+const _SIM_WINDOW = 20, _SIM_THRESH = 2.5, _BASE_TEMP = 22.0, _BASE_HUM = 58.0;
+
+function simTick() {
+  _simCount++;
+  const t = _simCount * (REFRESH_MS / 1000);
+  const anomalyNow = Math.random() > 0.93;
+  const spike = anomalyNow ? 6 + Math.random() * 4 : 0;
+  const temp = _BASE_TEMP + 1.5*Math.sin(t/40) + 0.3*Math.sin(t/8) + 0.12*_gaussian() + spike;
+  const hum = _BASE_HUM - 0.4*Math.sin(t/40) + 0.5*_gaussian();
+
+  _tempBuf.push(temp);
+  if (_tempBuf.length > _SIM_WINDOW) _tempBuf.shift();
+  let zscore = 0, isAnomaly = false;
+  if (_tempBuf.length >= 5) {
+    const mean = _rollingMean(_tempBuf), std = _rollingStd(_tempBuf, mean);
+    if (std > 0) { zscore = Math.abs(temp - mean) / std; isAnomaly = zscore > _SIM_THRESH; }
+  }
+  const win = _tempBuf.slice(-10);
+  let slope = 0;
+  if (win.length >= 3) {
+    const n = win.length, sx = n*(n-1)/2, sx2 = n*(n-1)*(2*n-1)/6;
+    const sy = win.reduce((a,b)=>a+b,0), sxy = win.reduce((a,v,i)=>a+i*v,0);
+    const den = n*sx2 - sx*sx;
+    slope = den !== 0 ? (n*sxy - sx*sy) / den : 0;
+  }
+  const trendLabel = Math.abs(slope) < 0.05 ? "stable"
+    : slope > 0.5 ? "hausse rapide" : slope > 0 ? "hausse"
+    : slope < -0.5 ? "chute rapide" : "baisse";
+
+  const mean = _tempBuf.length ? _rollingMean(_tempBuf) : _BASE_TEMP;
+  const std = _tempBuf.length >= 2 ? _rollingStd(_tempBuf, mean) : 0;
+  const winMin = _tempBuf.length ? Math.min(..._tempBuf) : _BASE_TEMP;
+  const winMax = _tempBuf.length ? Math.max(..._tempBuf) : _BASE_TEMP;
+
+  if (isAnomaly) {
+    _simAlerts.push({ ts: Math.floor(Date.now()/1000), type: "temp_anomaly",
+      msg: `T=${temp.toFixed(1)}°C — z=${zscore.toFixed(2)}σ` });
+  }
+
+  return {
+    temp: parseFloat(temp.toFixed(2)), hum: parseFloat(Math.max(20,Math.min(100,hum)).toFixed(1)),
+    valid: true, count: _simCount, sensor_type: _simSensorType, simulated: true,
+    anomaly: isAnomaly, zscore: parseFloat(zscore.toFixed(3)),
+    trend_label: trendLabel, slope: parseFloat(slope.toFixed(4)),
+    mean: parseFloat(mean.toFixed(2)), std: parseFloat(std.toFixed(3)),
+    win_min: parseFloat(winMin.toFixed(1)), win_max: parseFloat(winMax.toFixed(1)),
+    g_min: parseFloat(Math.min(..._tempBuf, _BASE_TEMP-2).toFixed(1)),
+    g_max: parseFloat(Math.max(..._tempBuf, _BASE_TEMP+2).toFixed(1)),
+    alert_count: _simAlerts.length, storage: "simulation", log_lines: _simCount,
+  };
+}
+
+const _origFetch = window.fetch;
+window.fetch = (url) => {
+  if (url === API_URL) return Promise.resolve({ ok: true, json: () => Promise.resolve(simTick()) });
+  if (url === ALERTS_URL) return Promise.resolve({ ok: true, json: () => Promise.resolve({ alerts: _simAlerts }) });
+  return _origFetch(url);
+};
+
+
+let tempData = [], humData = [], timeLabels = [], anomalyActive = false;
+
+function resizeCanvas(canvas) {
+  canvas.width  = canvas.offsetWidth  * window.devicePixelRatio;
+  canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+}
+function drawChart(canvasId, data, color, yMin, yMax, anomalyFlags) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  resizeCanvas(canvas);
+  const ctx = canvas.getContext("2d");
+  const w = canvas.width, h = canvas.height;
+  const pad = {top:10,right:10,bottom:20,left:38};
+  const pw = w-pad.left-pad.right, ph = h-pad.top-pad.bottom;
+  ctx.clearRect(0,0,w,h); ctx.fillStyle="#161b22"; ctx.fillRect(0,0,w,h);
+  if (data.length < 2) return;
+  const range = yMax-yMin||1;
+  const xPos = i => pad.left+(i/(data.length-1))*pw;
+  const yPos = v => pad.top+ph-((v-yMin)/range)*ph;
+  ctx.strokeStyle="#21262d"; ctx.lineWidth=1;
+  for (let g=0;g<=4;g++) {
+    const y=pad.top+(g/4)*ph;
+    ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(pad.left+pw,y);ctx.stroke();
+    ctx.fillStyle="#8b949e";ctx.font=`${Math.round(10*window.devicePixelRatio)}px monospace`;
+    ctx.textAlign="right";ctx.fillText((yMax-(g/4)*range).toFixed(1),pad.left-4,y+4);
+  }
+  if (anomalyFlags&&anomalyFlags.length===data.length) {
+    ctx.fillStyle="rgba(239,68,68,0.15)";
+    for (let i=0;i<data.length;i++) if(anomalyFlags[i]) {
+      const x0=i>0?xPos(i-.5):xPos(i), x1=i<data.length-1?xPos(i+.5):xPos(i);
+      ctx.fillRect(x0,pad.top,x1-x0,ph);
+    }
+  }
+  ctx.strokeStyle=color;ctx.lineWidth=2*window.devicePixelRatio;ctx.lineJoin="round";
+  ctx.beginPath();
+  data.forEach((v,i)=>i===0?ctx.moveTo(xPos(i),yPos(v)):ctx.lineTo(xPos(i),yPos(v)));
+  ctx.stroke();
+  ctx.fillStyle=color;ctx.beginPath();
+  ctx.arc(xPos(data.length-1),yPos(data[data.length-1]),4*window.devicePixelRatio,0,Math.PI*2);ctx.fill();
+}
+
+async function fetchData() {
+  try {
+    const r = await fetch(API_URL);
+    if (!r.ok) throw new Error(r.status);
+    const d = await r.json();
+    const ts = new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+    tempData.push(d.temp);humData.push(d.hum);timeLabels.push(ts);
+    if (tempData.length>MAX_POINTS){tempData.shift();humData.shift();timeLabels.shift();}
+    const anomFlags=tempData.map(()=>false);
+    if (d.anomaly) anomFlags[anomFlags.length-1]=true;
+    document.getElementById("val-temp").innerHTML=`${d.temp.toFixed(1)}<span class="card-unit">°C</span>`;
+    document.getElementById("val-hum").innerHTML=`${d.hum.toFixed(0)}<span class="card-unit">%</span>`;
+    document.getElementById("val-count").textContent=d.count??"--";
+    document.getElementById("val-zscore").textContent=d.zscore!=null?d.zscore.toFixed(2):"--";
+
+    // Badge capteur
+    const sensorType = d.simulated ? "simulated" : (d.sensor_type || "none");
+    const badge = document.getElementById("sensor-badge");
+    badge.textContent = SENSOR_LABELS[sensorType] || sensorType;
+    badge.className = sensorType;
+
+    const trendEl=document.getElementById("val-trend");
+    const trendLbl=d.trend_label??"stable";
+    trendEl.textContent=trendLbl;
+    trendEl.className="card-value "+(trendLbl.includes("hausse")?"trend-up":trendLbl.includes("baisse")||trendLbl.includes("chute")?"trend-down":"trend-stable");
+    document.getElementById("sub-trend").textContent=d.slope!=null?`${d.slope.toFixed(3)} °C/mesure`:"";
+    if (d.mean!=null) document.getElementById("ai-mean").textContent=d.mean.toFixed(2)+" °C";
+    if (d.std!=null)  document.getElementById("ai-std").textContent=d.std.toFixed(3);
+    if (d.g_min!=null)document.getElementById("ai-gmin").textContent=d.g_min.toFixed(1)+" °C";
+    if (d.g_max!=null)document.getElementById("ai-gmax").textContent=d.g_max.toFixed(1)+" °C";
+    if (d.alert_count!=null)document.getElementById("ai-alerts").textContent=d.alert_count;
+    if (d.slope!=null)document.getElementById("ai-slope").textContent=d.slope.toFixed(4);
+    if (d.win_min!=null&&d.win_max!=null)
+      document.getElementById("sub-temp").textContent=`fenêtre : ${d.win_min.toFixed(1)} / ${d.win_max.toFixed(1)} °C`;
+    if (d.storage)document.getElementById("sub-storage").textContent=d.storage;
+    anomalyActive=d.anomaly===true;
+    const banner=document.getElementById("anomaly-banner");
+    const cardTemp=document.getElementById("card-temp");
+    if (anomalyActive) {
+      banner.classList.add("visible");
+      document.getElementById("anomaly-msg").textContent=`Anomalie détectée — T=${d.temp.toFixed(1)}°C — z=${(d.zscore??0).toFixed(2)}σ`;
+      cardTemp.className="card anomaly";
+      const list=document.getElementById("alert-list");
+      const empty=list.querySelector(".no-alerts");if(empty)empty.remove();
+      const li=document.createElement("li");
+      li.textContent=`⚠ ${new Date().toLocaleTimeString("fr-FR")} — T=${d.temp.toFixed(1)}°C — z=${(d.zscore??0).toFixed(2)}σ`;
+      list.prepend(li);
+      while(list.children.length>20)list.removeChild(list.lastChild);
+    } else {
+      banner.classList.remove("visible");cardTemp.className="card";
+    }
+    document.getElementById("status-dot").className="ok";
+    document.getElementById("last-update").textContent=`Mis à jour : ${ts}`;
+    const tMin=Math.min(...tempData)-1,tMax=Math.max(...tempData)+1;
+    drawChart("chart-temp",tempData,"#00c896",tMin,tMax,anomFlags);
+    drawChart("chart-hum", humData, "#7c3aed",Math.max(0,Math.min(...humData)-5),Math.min(100,Math.max(...humData)+5),null);
+  } catch(e) {
+    document.getElementById("status-dot").className="err";
+    document.getElementById("last-update").textContent="Connexion perdue";
+  }
+}
+
+async function fetchAlerts() {
+  try {
+    const r=await fetch(ALERTS_URL);
+    if (!r.ok) return;
+    const d=await r.json();
+    if (!d.alerts||d.alerts.length===0) return;
+    const list=document.getElementById("alert-list");
+    list.innerHTML=d.alerts.slice().reverse().map(a=>{
+      const dt=new Date(a.ts*1000).toLocaleTimeString("fr-FR");
+      return `<li>⚠ ${dt} — ${a.msg}</li>`;
+    }).join("");
+  } catch(e) {}
+}
+
+window.addEventListener("load",()=>{
+  fetchData();fetchAlerts();
+  setInterval(fetchData,REFRESH_MS);
+  setInterval(fetchAlerts,REFRESH_MS*5);
+});
+window.addEventListener("resize",()=>{
+  if(tempData.length>1){
+    drawChart("chart-temp",tempData,"#00c896",Math.min(...tempData)-1,Math.max(...tempData)+1,null);
+    drawChart("chart-hum", humData, "#7c3aed",Math.max(0,Math.min(...humData)-5),Math.min(100,Math.max(...humData)+5),null);
+  }
+});
+</script>
+</body>
+</html>

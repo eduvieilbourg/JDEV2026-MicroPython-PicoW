@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+title: "JDEV2026 — MicroPython sur Raspberry Pi Pico W"
+message: "Pour citer cet atelier, merci d’utiliser cette référence."
+type: software
+authors:
+  - family-names: "Duvieilbourg"
+    given-names: "Eric"
+    affiliation: "CNRS / LEMAR"
+version: "1.0.0"
+date-released: "2026-06-25"
+repository-code: "https://github.com/eduvieilbourg/JDEV2026-MicroPython-PicoW"
+abstract: "Support et code pédagogique pour un atelier MicroPython sur Raspberry Pi Pico W : I2C, capteurs, uasyncio, WiFi AP, API REST, dashboard web et détection statistique embarquée."
+keywords:
+  - MicroPython
+  - Raspberry Pi Pico W
+  - uasyncio
+  - embedded systems
+  - JDEV2026
