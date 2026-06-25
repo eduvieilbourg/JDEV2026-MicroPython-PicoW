@@ -6,7 +6,7 @@ Objectif : construire progressivement un mini-datalogger embarqué : capteur I2C
 
 ## Support de présentation
 
-- [Support PDF](supports/JDEV2026_MicroPython_PicoW_support.pdf)
+- [Support PDF](supports/Atelier_MicroPython_Pico_W_beta.pdf)
 
 Le code à copier sur le Pico W se trouve dans le dossier :
 
