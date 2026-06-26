@@ -14,13 +14,17 @@ Le code à copier sur le Pico W se trouve dans le dossier :
 JDEV2026/
 ```
 
+## IDE utilisé [Thonny](https://thonny.org/)
+
+Afin de ne pas passer trop de temps sur la configuration d'un IDE, Thonny est recommandé pour cet atelier / formation. Si vous êtes à l'aise avec un autre IDE pour du upy (VSCode par exemple), vous pouvez l'utiliser.
+
 ## Démarrage rapide Thonny
 
-Pour l’atelier :
+Pour l’atelier / formation :
 1. Télécharger le dépôt
 2. Copier le dossier complet JDEV2026/ sur le Pico W
-3. Repérer les scripts dans JDEV2026/steps/
-4. À la fin de chaque partie dans la présentation, lancer et tester le fichier indiqué.
+3. Repérer les scripts d'étapes sous JDEV2026/steps/
+4. À la fin de chaque partie présentée lors de l'atelier, vous pouvez lancer/tester le script indiqué
 
 ## Parcours progressif
 
@@ -34,7 +38,7 @@ Pour l’atelier :
 | 4 | `JDEV2026/steps/04_timing_ticks/main.py` | Boucle périodique sans dérive cumulative |
 | 5 | `JDEV2026/steps/05_asyncio_led_capteur/main.py` | Deux tâches coopératives : LED + capteur |
 | 5 | `JDEV2026/steps/05_asyncio_all/*.py` | Toutes les tâches timer sont coopératives  |
-| 6 | `JDEV2026/steps/06_web_api/main.py` | WiFi AP + routes `/`, `/data`, `/temp` |
+| 6 | `JDEV2026/steps/06_web_ap/main.py` | WiFi AP + routes `/`, `/data`, `/temp` |
 | 7 | `JDEV2026/steps/07_ia_zscore/main.py` | Détection statistique d'anomalie par z-score |
 | Final | `JDEV2026/main.py` | Application complète : dashboard, stockage, IA, API |
 
@@ -53,55 +57,58 @@ JDEV2026-MicroPython-PicoW/
 ├── JDEV2026/                 ← seul dossier à copier sur le Pico
 │   ├── main.py               # application finale à lancer
 │   ├── config.py             # configuration globale
+│   ├── project_env.py        # configuration de l'environnement des importations du projet
 │   ├── acquisition.py        # auto-détection capteurs + acquisition
 │   ├── web_ap.py             # WiFi AP + serveur HTTP/API REST
-│   ├── storage_sdcard.py     # CSV + SD si disponible
+│   ├── storage_sdcard.py     # CSV + SD (si disponible)
 │   ├── led_status.py         # état des leds du projet
 │   ├── ai/                   # statistiques, z-score, tendance, alertes
-│   ├── lib/                  # drivers SHT30 / SD / Pico Bricks
+│   ├── lib/                  # drivers SHT30 / SHTC3 / SD / PicoBricks / ...
 │   ├── static/               # dashboard HTML
 │   └── steps/                # étapes pédagogiques autonomes
 │
 ├── supports/
-│   ├── JDEV2026_MicroPython_Pico_W.pdf    # présentation atelier
+│   ├── JDEV2026_MicroPython_Pico_W_beta.pdf  # présentation lors de l'atelier
 │
 └── docs/
-    ├── QR_GitHub.png
-    └── screenshots/
+    ├── QR_GitHub.png         # QR code pour télécharger le dépôt
+    └── screenshots/          # quelques screenshots du rendu
 ```
 
-## Point important sur l'IA
+## Point important sur la partie "IA" abordée dans cet atelier/formation
 
-Dans cet atelier, le mot IA est utilisé mais sans rigueur :
+Le mot IA est utilisé mais sans véritable rigueur :
 
 - le Pico W ne fait pas tourner un LLM
 - le z-score glissant n'est pas un modèle prédictif
 - c'est un **détecteur statistique embarqué** utile pour introduire l'edge AI
-- la suite logique est TinyML / TFLite Micro / Edge Impulse, mais ce n'est pas l'objet des 2h
+- la suite logique est une formation plus complète TinyML / TFLite Micro / Edge Impulse, mais ce n'est pas l'objet de cet atelier formation
 
 ## GitHub pour l'atelier
 
-Pour les participants : dépôt public pendant les JDEV. Par la suite il y aura des tags/branches pour les étapes :
+Pour les participants : dépôt public pendant l'atelier/formation. Par la suite il y aura des tags/branches pour les étapes organisés comme ci-dessous :
 
 ```bash
 git tag step-01-i2c-scan
 git tag step-02-sht30-5-mesures
+git tag step-02-shtc3-5-mesures
 git tag step-03-code-structure
 git tag step-04-timing-ticks
-git tag step-05-asyncio
-git tag step-06-web-api
+git tag step-05-asyncio-led-capteur
+git tag step-05-asyncio-all
+git tag step-06-web-ap
 git tag step-07-ia-zscore
-git tag final
+git tag final-project
 ```
 
-Alternative envisagée : dépôt privé dans une organisation type équipe `jdev2026-participants` en lecture.
+Alternative posible : dépôt privé en lecture dans une organisation type équipe `atelier-formation-participants`
 
 ## Licence
 
 Voir :
 
-- `LICENSE_CODE_JDEV2026.md` pour le code ;
-- `LICENSE_SUPPORTS_CC-BY-NC-ND-4.0.md` pour les supports pédagogiques.
+- `LICENSE_CODE_JDEV2026.md` pour les codes
+- `LICENSE_SUPPORTS_CC-BY-NC-ND-4.0.md` pour les supports pédagogiques
 
 ## Citation
 
